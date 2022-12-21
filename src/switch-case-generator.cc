@@ -4,7 +4,8 @@
 #include <string_view>
 #include <cstring>
 
-auto do_generate(const std::string_view source, std::ofstream &output) -> void
+auto do_generate(const std::string_view source, std::ofstream &output) noexcept
+  -> void
 {
   char *chunk = std::strtok(const_cast<char *>(source.data()), " ");
   std::ostringstream outstrstream { "switch (/* unspecified */)\n{\n", std::ios::app };
