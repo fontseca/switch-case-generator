@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string_view>
 #include <cstring>
+#include <memory>
 
 /* The program name.  */
 constexpr inline static const char *PROGNAME = "switch-case-generator";
@@ -63,20 +64,22 @@ auto do_generate(const std::string_view source, std::ofstream &output) noexcept
         ::emit_error("invalid number: Cannot parse a negative number.");
       }
 
-      char lower[5], upper[5];
+      std::unique_ptr<char[]> lower(new char[position + 1]);
+      std::unique_ptr<char[]> upper(new char[position + 1]);
+
       std::uint32_t lower_ui { }, upper_ui { };
 
       /* get the individual lower and upper bounds  */
 
-      (void)std::strncpy(lower, chunk, static_cast<std::size_t>(position));
-      (void)std::strcpy(upper, 1 + chunk + position);
+      (void)std::strncpy(lower.get(), chunk, static_cast<std::size_t>(position));
+      (void)std::strcpy(upper.get(), 1 + chunk + position);
 
       lower[position] = '\0';
 
       /* and then, expand the hexadecimal numbers in between.  */
 
-      std::sscanf(lower, "%x", &lower_ui);
-      std::sscanf(upper, "%x", &upper_ui);
+      std::sscanf(lower.get(), "%x", &lower_ui);
+      std::sscanf(upper.get(), "%x", &upper_ui);
 
       if (upper_ui < lower_ui)
       {
@@ -88,7 +91,7 @@ auto do_generate(const std::string_view source, std::ofstream &output) noexcept
       while (lower_ui <= upper_ui)
       {
         /* A C-like equivalent would be `std::fprintf(..., "case 0x%X:\n", lower_ui);'.  */
-        outstrstream << "  case 0x" << std::uppercase << std::hex << lower_ui << ":\n";
+        outstrstream << "case 0x" << std::uppercase << std::hex << lower_ui << ":\n";
         ++lower_ui;
       }
     }
@@ -96,7 +99,7 @@ auto do_generate(const std::string_view source, std::ofstream &output) noexcept
     {
       std::uint32_t hexadecimal { };
       std::sscanf(chunk, "%x", &hexadecimal);
-      outstrstream << "  case 0x" << std::uppercase << std::hex << hexadecimal << ":\n";
+      outstrstream << "case 0x" << std::uppercase << std::hex << hexadecimal << ":\n";
     }
   }
   while ((chunk = std::strtok(nullptr, " ")));
